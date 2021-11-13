@@ -3,69 +3,90 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | Project_IXD1</title>
-    <script src="Build/UnityLoader.js"></script>
-    <script>
-      UnityLoader.instantiate("unityContainer", "Build/IXD_Demo.json");
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Project_IXD1</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
   </head>
-<body>
-	<div id="unityContainer">
-		<canvas id="unity-canvas" data-pixel-art="{{{ OPTIMIZE_FOR_PIXEL_ART }}}"></canvas>
-		<script src="Build/{{{ LOADER_FILENAME }}}"></script>
-		<script>
-			createUnityInstance(document.querySelector("#unity-canvas"), {
-				dataUrl: "Build/{{{ DATA_FILENAME }}}",
-				frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
-				codeUrl: "Build/{{{ CODE_FILENAME }}}",
-#if MEMORY_FILENAME
-				memoryUrl: "Build/{{{ MEMORY_FILENAME }}}",
-#endif
-#if SYMBOLS_FILENAME
-				symbolsUrl: "Build/{{{ SYMBOLS_FILENAME }}}",
-#endif
-				streamingAssetsUrl: "StreamingAssets",
-				companyName: "{{{ COMPANY_NAME }}}",
-				productName: "{{{ PRODUCT_NAME }}}",
-				productVersion: "{{{ PRODUCT_VERSION }}}",
-			}).then(function (instance) {
-				var canvas = instance.Module.canvas;
-				var container = canvas.parentElement;
-				function onResize() {
-					var w;
-					var h;
+  <body class="dark">
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas"></canvas>
+    </div>
+    <div id="loading-cover" style="display:none;">
+      <div id="unity-loading-bar">
+        <div id="unity-logo"><img src="logo.png"></div>
+        <div id="unity-progress-bar-empty" style="display: none;">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+        <div class="spinner"></div>
+      </div>
+    </div>
+    <div id="unity-fullscreen-button" style="display: none;"></div>
+    <script>
+      const hideFullScreenButton = "";
+      const buildUrl = "Build";
+      const loaderUrl = buildUrl + "/IXD_Demo.loader.js";
+      const config = {
+        dataUrl: buildUrl + "/IXD_Demo.data.gz",
+        frameworkUrl: buildUrl + "/IXD_Demo.framework.js.gz",
+        codeUrl: buildUrl + "/IXD_Demo.wasm.gz",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "NTUTIXD",
+        productName: "Project_IXD1",
+        productVersion: "0.1",
+      };
 
-					if (scaleToFit) {
-						w = window.innerWidth;
-						h = window.innerHeight;
+      const container = document.querySelector("#unity-container");
+      const canvas = document.querySelector("#unity-canvas");
+      const loadingCover = document.querySelector("#loading-cover");
+      const progressBarEmpty = document.querySelector("#unity-progress-bar-empty");
+      const progressBarFull = document.querySelector("#unity-progress-bar-full");
+      const fullscreenButton = document.querySelector("#unity-fullscreen-button");
+      const spinner = document.querySelector('.spinner');
 
-						var r = {{{ HEIGHT }}} / {{{ WIDTH }}};
+      const canFullscreen = (function() {
+        for (const key of [
+            'exitFullscreen',
+            'webkitExitFullscreen',
+            'webkitCancelFullScreen',
+            'mozCancelFullScreen',
+            'msExitFullscreen',
+          ]) {
+          if (key in document) {
+            return true;
+          }
+        }
+        return false;
+      }());
 
-						if (w * r > window.innerHeight) {
-							w = Math.min(w, Math.ceil(h / r));
-						}
-						h = Math.floor(w * r);
-					} else {
-						w = {{{ WIDTH }}};
-						h = {{{ HEIGHT }}};
-					}
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        container.className = "unity-mobile";
+        config.devicePixelRatio = 1;
+      }
+      loadingCover.style.display = "";
 
-					container.style.width = canvas.style.width = w + "px";
-					container.style.height = canvas.style.height = h + "px";
-					container.style.top = Math.floor((window.innerHeight - h) / 2) + "px";
-					container.style.left = Math.floor((window.innerWidth - w) / 2) + "px";
-				}
-
-				var scaleToFit;
-				try {
-					scaleToFit = !!JSON.parse("{{{ SCALE_TO_FIT }}}");
-				} catch (e) {
-					scaleToFit = true;
-				}
-				window.addEventListener('resize', onResize);
-				onResize();
-			});
-		</script>
-	</div>
-</body>
+      const script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          spinner.style.display = "none";
+          progressBarEmpty.style.display = "";
+          progressBarFull.style.width = `${100 * progress}%`;
+        }).then((unityInstance) => {
+          loadingCover.style.display = "none";
+          if (canFullscreen) {
+            if (!hideFullScreenButton) {
+              fullscreenButton.style.display = "";
+            }
+            fullscreenButton.onclick = () => {
+              unityInstance.SetFullscreen(1);
+            };
+          }
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
 </html>
